@@ -42,15 +42,18 @@ def welcome():
            f"/api/v1.0/start_end")
            
 # reflect the tables
-date = dt.datetime(2016,8,23)
+#date = dt.datetime(2016,8,23)
+  #filter(func.strftime("%m", Dow.date) == "05").
+latest_date = session.query(Measurement.date).order_by(Measurement.date.desc()).first().date
+date = dt.datetime.strptime(latest_date, '%Y-%m-%d') - dt.timedelta(days=365)
 @app.route("/api/v1.0/precipitation")
 
 def precipitation():
    date_prcp = session.query(Measurement.prcp , Measurement.date).\
-    filter(Measurement.date >= date).\
+    filter(func.strftime("%Y-%m-%d", Measurement.date) >= date).\
     order_by(Measurement.date).all()
    date_prcp_dictionary = {date : x for date , x in date_prcp}
-   return jsonify(date_prcp_dictionary)
+   return jsonify(list(date_prcp_dictionary))
 
 
 @app.route("/api/v1.0/stations")
@@ -75,13 +78,16 @@ def tobs():
 
 @app.route ("/api/v1.0/start_end")
 
-def temps(start,end):
+def temps(start, end):
     start_end = session.query(Measurement).filter(Measurement.date>= start).filter(Measurement.date<=end)
     list_of_temp =[] 
     for row in start_end :
         list_of_temp.append(row.tobs) 
-    return (jsonify ({"Minimum Temperature is ": min(list_of_temp ),"Maximum Temperature is ": max(list_of_temp ),"Average Temperature is ":np.mean}))
-           
+    return jsonify ({"Minimum Temperature is ": min(list_of_temp ),\
+                          "Maximum Temperature is ": max(list_of_temp ),\
+                            "Average Temperature is ":np.mean})
+
+ 
             
 
 if __name__ == "__main__":
